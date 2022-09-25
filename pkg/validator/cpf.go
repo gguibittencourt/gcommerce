@@ -1,10 +1,9 @@
 package validator
 
 import (
-	"bytes"
 	"regexp"
 	"strconv"
-	"unicode"
+	"strings"
 )
 
 const (
@@ -12,23 +11,32 @@ const (
 	secondVerifierDigitPosition = 11
 )
 
-var (
-	cpfRegexp = regexp.MustCompile(`^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$`)
-)
-
-func IsValidCPF(cpf string) bool {
-	if cpf == "" {
+func IsValidCPF(value string) bool {
+	if value == "" {
 		return false
 	}
-	if !cpfRegexp.MatchString(cpf) {
+	digits := cleanNonDigits(value)
+	if !isValidLength(digits) || equalDigits(digits) {
 		return false
 	}
-	digits := cleanNonDigits(cpf)
-	cpfToValidate := digits[:9]
+	cpfToValidate := extractDigit(digits)
 	firstDigit := calculateVerifierDigit(cpfToValidate, firstVerifierDigitPosition)
 	cpfToValidate += firstDigit
 	secondDigit := calculateVerifierDigit(cpfToValidate, secondVerifierDigitPosition)
 	return digits == cpfToValidate+secondDigit
+}
+
+func equalDigits(digits string) bool {
+	firstDigit := digits[:1]
+	return strings.ReplaceAll(digits, firstDigit, "") == ""
+}
+
+func isValidLength(cpf string) bool {
+	return len(cpf) == 11
+}
+
+func extractDigit(cpf string) string {
+	return cpf[:9]
 }
 
 func calculateVerifierDigit(cpf string, position int) string {
@@ -45,13 +53,8 @@ func calculateVerifierDigit(cpf string, position int) string {
 }
 
 func cleanNonDigits(s string) string {
-	buf := bytes.NewBufferString("")
-	for _, r := range s {
-		if unicode.IsDigit(r) {
-			buf.WriteRune(r)
-		}
-	}
-	return buf.String()
+	digitsRegex := regexp.MustCompile(`\D`)
+	return digitsRegex.ReplaceAllString(s, "")
 }
 
 func toInt(r rune) int {
