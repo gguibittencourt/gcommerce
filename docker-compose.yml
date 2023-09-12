@@ -1,0 +1,22 @@
+version: '3.7'
+services:
+  mysql:
+    container_name: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_ROOT_USERNAME=root
+      - MYSQL_DATABASE=gcommerce
+    image: mysql:8
+    restart: always
+    ports:
+      - "3306:3306"
+  gcommerce-orders:
+    build: .
+    container_name: gcommerce-orders
+    env_file: variables.env
+    ports:
+      - "8080:8080"
+    restart: always
+    volumes:
+      - .:/app
+      - $HOME/go/pkg/mod:/go/pkg/mod
