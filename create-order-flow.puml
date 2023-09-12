@@ -1,0 +1,48 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+title Create Order
+
+actor Client
+participant OrderAPI
+database DB
+participant FreightAPI
+queue CreateOrderFeed
+
+Client -> OrderAPI: Create the order \n POST /orders
+
+activate OrderAPI
+
+OrderAPI -> OrderAPI : Validate the order
+
+alt  it's invalid
+    OrderAPI --> Client : 422 Unprocessable Entity \n invalid order
+end
+
+OrderAPI -> FreightAPI : Calculate the freight \n POST /calculate
+
+activate FreightAPI
+
+FreightAPI -> FreightAPI : Calculate the freight
+
+alt failure
+    FreightAPI --> OrderAPI : 5xx or 4xx freight unavailable
+    OrderAPI --> Client : 422 Unprocessable Entity \n freight unavailable
+end
+
+FreightAPI --> OrderAPI : 200 OK \n return the freight
+
+deactivate FreightAPI
+
+OrderAPI -> DB : Save the order
+
+DB --> OrderAPI : OK
+
+OrderAPI -> CreateOrderFeed : Publish the order
+CreateOrderFeed --> OrderAPI : OK
+
+OrderAPI --> Client : 201 Created
+deactivate OrderAPI
+
+
+@enduml
