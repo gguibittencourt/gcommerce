@@ -1,4 +1,4 @@
-package entity_test
+package order_test
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gguibittencourt/gcommerce/app/order/entity"
+	"github.com/gguibittencourt/gcommerce/app/order"
 )
 
 func TestCreateOrder(t *testing.T) {
@@ -19,7 +19,7 @@ func TestCreateOrder(t *testing.T) {
 		allDiscount        = buildCoupon(100, normalDate)
 		allDiscountExpired = buildCoupon(100, expiredDate)
 		halfDiscount       = buildCoupon(50, normalDate)
-		threeOrderItems    = []entity.OrderItem{
+		threeOrderItems    = []order.Item{
 			buildOrderItem(1, 1, 10),
 			buildOrderItem(2, 2, 20),
 			buildOrderItem(3, 3, 30),
@@ -27,72 +27,66 @@ func TestCreateOrder(t *testing.T) {
 	)
 	tests := []struct {
 		name     string
-		order    entity.Order
+		order    order.Order
 		expected error
 	}{
 		{
 			name: "given an order with discount and three items, should return nil",
-			order: entity.Order{
+			order: order.Order{
 				CPF:    validCPF,
 				Items:  threeOrderItems,
 				Coupon: halfDiscount,
-				Date:   normalDate,
 			},
 			expected: nil,
 		},
 		{
 			name: "given an order with expired coupon with total discount, should return error",
-			order: entity.Order{
+			order: order.Order{
 				CPF:    validCPF,
 				Items:  threeOrderItems,
 				Coupon: allDiscountExpired,
-				Date:   normalDate,
 			},
 			expected: nil,
 		},
 		{
 			name: "given an order with invalid CPF, should return error",
-			order: entity.Order{
-				CPF:  invalidCPF,
-				Date: normalDate,
+			order: order.Order{
+				CPF: invalidCPF,
 			},
 			expected: errors.New("invalid CPF"),
 		},
 		{
 			name: "given an order without items, should return error",
-			order: entity.Order{
-				CPF:  validCPF,
-				Date: normalDate,
+			order: order.Order{
+				CPF: validCPF,
 			},
 			expected: errors.New("order without items"),
 		},
 		{
 			name: "given an order with total discount, should return error",
-			order: entity.Order{
+			order: order.Order{
 				CPF:    validCPF,
 				Items:  threeOrderItems,
 				Coupon: allDiscount,
-				Date:   normalDate,
 			},
 			expected: errors.New("the total order price is invalid"),
 		},
 		{
 			name: "given an order with invalid quantity item, should return error",
-			order: entity.Order{
+			order: order.Order{
 				CPF: validCPF,
-				Items: entity.OrderItems{
+				Items: order.Items{
 					buildOrderItem(1, 0, 10),
 				},
 				Coupon: allDiscount,
-				Date:   normalDate,
 			},
 			expected: errors.New("invalid quantity of 1"),
 		},
 		{
 			name: "given an order with duplicated item, should return error",
-			order: entity.Order{
+			order: order.Order{
 				CPF: validCPF,
-				Items: entity.OrderItems{
+				Items: order.Items{
 					buildOrderItem(1, 1, 10),
 					buildOrderItem(1, 1, 10),
 				},
@@ -108,18 +102,18 @@ func TestCreateOrder(t *testing.T) {
 	}
 }
 
-func buildOrderItem(itemID uint64, amount uint32, price float64) entity.OrderItem {
-	return entity.OrderItem{
+func buildOrderItem(itemID uint64, amount uint32, price float64) order.Item {
+	return order.Item{
 		ItemID: itemID,
 		Amount: amount,
 		Price:  price,
 	}
 }
 
-func buildCoupon(percentage float64, date time.Time) entity.Coupon {
-	return entity.Coupon{
-		Code:       "code",
-		Percentage: percentage,
-		ExpireDate: date,
+func buildCoupon(percentage float64, date time.Time) order.Coupon {
+	return order.Coupon{
+		Code:           "code",
+		Percentage:     percentage,
+		ExpirationDate: date,
 	}
 }
