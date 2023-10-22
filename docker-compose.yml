@@ -10,6 +10,17 @@ services:
     restart: always
     ports:
       - "3306:3306"
+  rabbitmq:
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_DEFAULT_VHOST=/
+    image: rabbitmq:3.9.29-management
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "15692:15692"
   gcommerce-orders:
     build: .
     container_name: gcommerce-orders

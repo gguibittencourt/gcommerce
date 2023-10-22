@@ -6,11 +6,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/fx"
 
-	"github.com/gguibittencourt/gcommerce/app/freight/services"
+	couponRepositories "github.com/gguibittencourt/gcommerce/app/coupon/repositories"
+	freightRepositories "github.com/gguibittencourt/gcommerce/app/freight/repositories"
+	"github.com/gguibittencourt/gcommerce/app/order/handlers/rabbitmq"
 	"github.com/gguibittencourt/gcommerce/app/order/handlers/rest/create"
 	"github.com/gguibittencourt/gcommerce/app/order/handlers/rest/find"
 	"github.com/gguibittencourt/gcommerce/app/order/repositories"
 	"github.com/gguibittencourt/gcommerce/app/order/usecases"
+	r "github.com/gguibittencourt/gcommerce/internal/rabbitmq"
 )
 
 var repositoriesFactory = fx.Provide(
@@ -19,18 +22,21 @@ var repositoriesFactory = fx.Provide(
 )
 
 var useCasesFactory = fx.Provide(
-	func(r services.Service) usecases.FreightService { return r },
-	func(r repositories.Writer) usecases.Repository { return r },
+	func(r couponRepositories.Reader) usecases.CouponReader { return r },
+	func(r freightRepositories.Repository) usecases.FreightReader { return r },
+	func(r repositories.Writer) usecases.Writer { return r },
+	func(r r.Publisher) usecases.Publisher { return r },
 	usecases.NewCreateUsecase,
 	func(r repositories.Reader) usecases.FindRepository { return r },
 	usecases.NewFindUsecase,
 )
 
 var handlersFactory = fx.Provide(
-	func(s usecases.CreateUsecase) create.Service { return s },
+	func(s usecases.CreateUsecase) create.UseCase { return s },
 	create.NewHandler,
-	func(s usecases.FindUsecase) find.Service { return s },
+	func(s usecases.FindUsecase) find.UseCase { return s },
 	find.NewHandler,
+	func(s r.Consumer) rabbitmq.Service { return s },
 )
 
 var orderModule = fx.Options(
@@ -40,6 +46,7 @@ var orderModule = fx.Options(
 	fx.Invoke(
 		RegisterCreateHandler,
 		RegisterGetHandler,
+		rabbitmq.NewConsumer,
 	),
 )
 

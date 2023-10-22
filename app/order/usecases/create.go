@@ -2,57 +2,56 @@ package usecases
 
 import (
 	"context"
+	"fmt"
+	"time"
 
+	"github.com/gguibittencourt/gcommerce/app/coupon"
 	"github.com/gguibittencourt/gcommerce/app/freight"
 
 	"github.com/gguibittencourt/gcommerce/app/order"
 )
 
 type (
-	FreightService interface {
+	FreightReader interface {
 		Calculate(ctx context.Context, order order.Order) (freight.Freight, error)
 	}
-	CouponService interface {
-		GetByCode(ctx context.Context, couponCode string) (order.Coupon, error)
+	CouponReader interface {
+		FindByCode(ctx context.Context, code string) (coupon.Coupon, error)
 	}
-	Repository interface {
-		Create(ctx context.Context, order order.Order) error
+	Writer interface {
+		Save(ctx context.Context, order order.Order) error
+	}
+	Publisher interface {
+		Publish(ctx context.Context, msg any) error
 	}
 	CreateUsecase struct {
-		repository     Repository
-		freightService FreightService
-		couponService  CouponService
+		writer         Writer
+		freightService FreightReader
+		couponReader   CouponReader
+		publisher      Publisher
 	}
 )
 
-func NewCreateUsecase(repository Repository, freightService FreightService, couponService CouponService) CreateUsecase {
-	return CreateUsecase{
-		repository:     repository,
-		freightService: freightService,
-		couponService:  couponService,
-	}
+func NewCreateUsecase(writer Writer, freightReader FreightReader, couponReader CouponReader, publisher Publisher) CreateUsecase {
+	return CreateUsecase{writer, freightReader, couponReader, publisher}
 }
 
-func (c CreateUsecase) Create(ctx context.Context, order order.Order) error {
-	coupon, err := c.couponService.GetByCode(ctx, order.Coupon.Code)
+func (u CreateUsecase) Execute(ctx context.Context, o order.Order) (err error) {
+	o.Coupon, err = u.couponReader.FindByCode(ctx, o.Coupon.Code)
 	if err != nil {
 		return err
 	}
-	order.Coupon = coupon
-	if err := order.Validate(); err != nil {
+	if err = o.Validate(); err != nil {
 		return err
 	}
-	f, err := c.freightService.Calculate(ctx, order)
+	o.Freight, err = u.freightService.Calculate(ctx, o)
 	if err != nil {
 		return err
 	}
-	order.Freight = f
-	return c.repository.Create(ctx, order)
+	o.Status = order.StatusPending
+	o.Code = fmt.Sprintf("%d", time.Now().UnixNano())
+	if err = u.writer.Save(ctx, o); err != nil {
+		return err
+	}
+	return u.publisher.Publish(ctx, o)
 }
-
-//TODO fill the coupon
-//TODO validate the order
-//TODO fill the freight
-//TODO fill the code
-//TODO fill the total
-//TODO fill the status

@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gguibittencourt/gcommerce/app/coupon"
 	"github.com/gguibittencourt/gcommerce/app/freight"
 
 	"github.com/gguibittencourt/gcommerce/pkg/validator"
+)
+
+const (
+	StatusPending = "pending"
 )
 
 type (
@@ -17,7 +22,7 @@ type (
 		CPF       string          `json:"cpf"`
 		Status    string          `json:"status"`
 		Items     Items           `json:"items"`
-		Coupon    Coupon          `json:"coupon"`
+		Coupon    coupon.Coupon   `json:"coupon"`
 		Freight   freight.Freight `json:"freight"`
 		CreatedAt time.Time       `json:"created_at"`
 		UpdatedAt time.Time       `json:"updated_at"`
@@ -30,21 +35,7 @@ type (
 		Price     float64 `json:"price"`
 	}
 	Items []Item
-
-	Coupon struct {
-		CouponID       uint64    `json:"coupon_id"`
-		Code           string    `json:"code"`
-		Percentage     float64   `json:"percentage"`
-		ExpirationDate time.Time `json:"expiration_date"`
-	}
 )
-
-func (c Coupon) ApplyDiscount(total float64, date time.Time) float64 {
-	if c.ExpirationDate.After(date) {
-		return total
-	}
-	return total - ((c.Percentage * total) / 100)
-}
 
 func (o Order) Validate() error {
 	if !validator.IsValidCPF(o.CPF) {
@@ -86,8 +77,7 @@ func (os Items) Validate() error {
 	}
 	mapItems := make(map[uint64]bool)
 	for _, item := range os {
-		err := item.validate(mapItems)
-		if err != nil {
+		if err := item.validate(mapItems); err != nil {
 			return err
 		}
 		mapItems[item.ItemID] = true

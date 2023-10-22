@@ -37,7 +37,7 @@ package usecases_test
 //	}
 //	for _, test := range tests {
 //		t.Run(test.name, func(t *testing.T) {
-//			err := repository.CreateOrder(context.TODO(), test.order)
+//			err := writer.CreateOrder(context.TODO(), test.order)
 //			require.Equal(t, test.expected, err)
 //		})
 //	}

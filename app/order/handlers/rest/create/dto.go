@@ -1,6 +1,7 @@
 package create
 
 import (
+	"github.com/gguibittencourt/gcommerce/app/coupon"
 	"github.com/gguibittencourt/gcommerce/app/order"
 )
 
@@ -12,9 +13,9 @@ type (
 	}
 
 	Item struct {
-		ProductID uint64
-		Amount    uint32
-		Price     float64
+		ProductID uint64  `json:"product_id"`
+		Amount    uint32  `json:"amount"`
+		Price     float64 `json:"price"`
 	}
 )
 
@@ -26,7 +27,7 @@ func (p Payload) toOrder() order.Order {
 	return order.Order{
 		CPF:   p.CPF,
 		Items: items,
-		Coupon: order.Coupon{
+		Coupon: coupon.Coupon{
 			Code: p.Coupon,
 		},
 	}

@@ -29,8 +29,9 @@ func (r Repository) Calculate(ctx context.Context, order order.Order) (freight.F
 	//if err != nil {
 	//	return freight.Freight{}, err
 	//}
-	//return result.Result.(freight.Freight), nil
+	//return result.(freight.Freight), nil
 	return freight.Freight{
+		Code:          "123",
 		Price:         100,
 		DurationInMin: 150,
 		ETA:           time.Now().Add(150 * time.Minute),

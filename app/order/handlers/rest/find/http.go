@@ -12,18 +12,16 @@ import (
 )
 
 type (
-	Service interface {
-		FindByID(ctx context.Context, id uint64) (order.Order, error)
+	UseCase interface {
+		Execute(ctx context.Context, id uint64) (order.Order, error)
 	}
 	Handler struct {
-		service Service
+		useCase UseCase
 	}
 )
 
-func NewHandler(service Service) Handler {
-	return Handler{
-		service: service,
-	}
+func NewHandler(service UseCase) Handler {
+	return Handler{service}
 }
 
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +32,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	o, err := h.service.FindByID(ctx, orderID)
+	o, err := h.useCase.Execute(ctx, orderID)
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return

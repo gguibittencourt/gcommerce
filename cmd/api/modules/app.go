@@ -8,6 +8,7 @@ func NewApp() *fx.App {
 	options := []fx.Option{
 		internalModule,
 		freightModule,
+		couponModule,
 		orderModule,
 	}
 	return fx.New(

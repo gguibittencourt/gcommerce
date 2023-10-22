@@ -21,6 +21,6 @@ func NewFindUsecase(repository FindRepository) FindUsecase {
 	}
 }
 
-func (s FindUsecase) FindByID(ctx context.Context, id uint64) (order.Order, error) {
+func (s FindUsecase) Execute(ctx context.Context, id uint64) (order.Order, error) {
 	return s.repository.FindByID(ctx, id)
 }

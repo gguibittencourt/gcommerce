@@ -3,28 +3,24 @@ package repositories
 import (
 	"time"
 
+	"github.com/gguibittencourt/gcommerce/app/coupon"
 	"github.com/gguibittencourt/gcommerce/app/freight"
 	"github.com/gguibittencourt/gcommerce/app/order"
 	"github.com/gguibittencourt/gcommerce/internal/database"
 )
 
-type couponModel struct {
-	database.Model
-	Code           string
-	ExpirationDate time.Time
-	Percentage     float64
-}
-
 type freightModel struct {
 	database.Model
-	Code          string
-	Price         float64
-	DurationInMin time.Duration
-	ETA           time.Time
+	OrderID  uint64
+	Code     string
+	Price    float64
+	Duration time.Duration
+	ETA      time.Time
 }
 
 type itemModel struct {
 	database.Model
+	OrderID   uint64
 	ProductID uint64
 	Amount    uint16
 	Price     float64
@@ -32,13 +28,13 @@ type itemModel struct {
 
 type orderModel struct {
 	database.Model
-	CPF     string
-	Code    string
-	Status  string
-	Total   float64
-	Coupon  couponModel  `gorm:"foreignKey:CouponID;references:ID"`
-	Freight freightModel `gorm:"foreignKey:FreightID;references:ID"`
-	Items   []itemModel  `gorm:"foreignKey:ItemID;references:ID"`
+	CPF      string
+	Code     string
+	Status   string
+	Total    float64
+	CouponID uint64
+	Freight  freightModel `gorm:"foreignKey:OrderID;references:ID"`
+	Items    []itemModel  `gorm:"foreignKey:OrderID;references:ID"`
 }
 
 func (orderModel) TableName() string {
@@ -53,8 +49,41 @@ func (freightModel) TableName() string {
 	return "freight"
 }
 
-func (couponModel) TableName() string {
-	return "coupon"
+func toOrderModel(o order.Order) orderModel {
+	return orderModel{
+		CPF:      o.CPF,
+		Code:     o.Code,
+		Status:   o.Status,
+		Total:    o.Total(),
+		CouponID: o.Coupon.CouponID,
+		Freight:  toFreightModel(o.Freight),
+		Items:    toItemsModel(o.Items),
+	}
+}
+
+func toItemsModel(items order.Items) []itemModel {
+	models := make([]itemModel, len(items))
+	for i := range items {
+		models[i] = toItemModel(items[i])
+	}
+	return models
+}
+
+func toItemModel(item order.Item) itemModel {
+	return itemModel{
+		ProductID: item.ProductID,
+		Amount:    uint16(item.Amount),
+		Price:     item.Price,
+	}
+}
+
+func toFreightModel(f freight.Freight) freightModel {
+	return freightModel{
+		Code:     f.Code,
+		Price:    f.Price,
+		Duration: f.DurationInMin,
+		ETA:      f.ETA,
+	}
 }
 
 func (o orderModel) toOrder() order.Order {
@@ -63,9 +92,11 @@ func (o orderModel) toOrder() order.Order {
 		items[i] = o.Items[i].toItem()
 	}
 	return order.Order{
-		OrderID:   o.ID,
-		CPF:       o.CPF,
-		Coupon:    o.Coupon.toCoupon(),
+		OrderID: o.ID,
+		CPF:     o.CPF,
+		Coupon: coupon.Coupon{
+			CouponID: o.CouponID,
+		},
 		Items:     items,
 		CreatedAt: o.CreatedAt,
 		UpdatedAt: o.UpdatedAt,
@@ -81,20 +112,12 @@ func (i itemModel) toItem() order.Item {
 		Price:     i.Price,
 	}
 }
-func (c couponModel) toCoupon() order.Coupon {
-	return order.Coupon{
-		CouponID:       c.ID,
-		Code:           c.Code,
-		Percentage:     c.Percentage,
-		ExpirationDate: c.ExpirationDate,
-	}
-}
 
 func (f freightModel) toFreight() freight.Freight {
 	return freight.Freight{
 		FreightID:     f.ID,
 		Price:         f.Price,
-		DurationInMin: f.DurationInMin,
+		DurationInMin: f.Duration,
 		ETA:           f.ETA,
 	}
 }

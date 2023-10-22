@@ -10,7 +10,7 @@ import (
 
 type (
 	UseCase interface {
-		Create(ctx context.Context, order order.Order) error
+		Execute(ctx context.Context, order order.Order) error
 	}
 	Handler struct {
 		useCase UseCase
@@ -30,7 +30,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if err := h.useCase.Create(ctx, p.toOrder()); err != nil {
+	if err := h.useCase.Execute(ctx, p.toOrder()); err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}

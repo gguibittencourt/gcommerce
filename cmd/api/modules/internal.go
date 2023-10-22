@@ -5,6 +5,7 @@ import (
 
 	"github.com/gguibittencourt/gcommerce/internal/database"
 	"github.com/gguibittencourt/gcommerce/internal/httpclient"
+	"github.com/gguibittencourt/gcommerce/internal/rabbitmq"
 	"github.com/gguibittencourt/gcommerce/internal/server"
 )
 
@@ -13,6 +14,9 @@ var serverDependencies = fx.Provide(
 	database.NewConnection,
 	httpclient.NewRequester,
 	httpclient.NewClient,
+	rabbitmq.NewConnection,
+	rabbitmq.NewPublisher,
+	rabbitmq.NewConsumer,
 )
 
 var internalModule = fx.Options(

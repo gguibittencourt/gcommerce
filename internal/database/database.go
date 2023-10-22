@@ -25,5 +25,6 @@ func buildDBConfig() *mysql.Config {
 	cfg.User = "root"
 	cfg.Passwd = "root"
 	cfg.DBName = "gcommerce"
+	cfg.ParseTime = true
 	return cfg
 }
