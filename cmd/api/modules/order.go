@@ -8,6 +8,8 @@ import (
 
 	couponRepositories "github.com/gguibittencourt/gcommerce/app/coupon/repositories"
 	freightRepositories "github.com/gguibittencourt/gcommerce/app/freight/repositories"
+	rabbitmqConsumer "github.com/gguibittencourt/gcommerce/internal/rabbitmq"
+
 	"github.com/gguibittencourt/gcommerce/app/order/handlers/rabbitmq"
 	"github.com/gguibittencourt/gcommerce/app/order/handlers/rest/create"
 	"github.com/gguibittencourt/gcommerce/app/order/handlers/rest/find"
@@ -36,7 +38,6 @@ var handlersFactory = fx.Provide(
 	create.NewHandler,
 	func(s usecases.FindUsecase) find.UseCase { return s },
 	find.NewHandler,
-	func(s r.Consumer) rabbitmq.Service { return s },
 )
 
 var orderModule = fx.Options(
@@ -46,7 +47,7 @@ var orderModule = fx.Options(
 	fx.Invoke(
 		RegisterCreateHandler,
 		RegisterGetHandler,
-		rabbitmq.NewConsumer,
+		RegisterConsumerHandler,
 	),
 )
 
@@ -59,5 +60,14 @@ func RegisterCreateHandler(mux *chi.Mux, handler create.Handler) {
 func RegisterGetHandler(mux *chi.Mux, handler find.Handler) {
 	mux.Route("/{order_id}", func(route chi.Router) {
 		route.Method(http.MethodGet, "/", handler)
+	})
+}
+
+func RegisterConsumerHandler(consumer r.Consumer) error {
+	return consumer.Consume(rabbitmqConsumer.ConsumerOptions{
+		ExchangeName: "order-created-exchange",
+		ExchangeType: "fanout",
+		QueueName:    "order-created-queue",
+		Callback:     rabbitmq.ConsumeMsg,
 	})
 }

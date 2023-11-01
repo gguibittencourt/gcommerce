@@ -7,7 +7,6 @@ import (
 
 	"github.com/gguibittencourt/gcommerce/app/coupon"
 	"github.com/gguibittencourt/gcommerce/app/freight"
-
 	"github.com/gguibittencourt/gcommerce/app/order"
 )
 
@@ -22,7 +21,7 @@ type (
 		Save(ctx context.Context, order order.Order) error
 	}
 	Publisher interface {
-		Publish(ctx context.Context, msg any) error
+		Publish(ctx context.Context, topicName string, msg any) error
 	}
 	CreateUsecase struct {
 		writer         Writer
@@ -53,5 +52,5 @@ func (u CreateUsecase) Execute(ctx context.Context, o order.Order) (err error) {
 	if err = u.writer.Save(ctx, o); err != nil {
 		return err
 	}
-	return u.publisher.Publish(ctx, o)
+	return u.publisher.Publish(ctx, "order-created-exchange", o)
 }

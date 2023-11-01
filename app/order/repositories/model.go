@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/gguibittencourt/gcommerce/app/coupon"
@@ -32,7 +33,7 @@ type orderModel struct {
 	Code     string
 	Status   string
 	Total    float64
-	CouponID uint64
+	CouponID sql.NullInt64
 	Freight  freightModel `gorm:"foreignKey:OrderID;references:ID"`
 	Items    []itemModel  `gorm:"foreignKey:OrderID;references:ID"`
 }
@@ -55,7 +56,7 @@ func toOrderModel(o order.Order) orderModel {
 		Code:     o.Code,
 		Status:   o.Status,
 		Total:    o.Total(),
-		CouponID: o.Coupon.CouponID,
+		CouponID: sql.NullInt64{Int64: int64(o.Coupon.CouponID), Valid: o.Coupon.CouponID != 0},
 		Freight:  toFreightModel(o.Freight),
 		Items:    toItemsModel(o.Items),
 	}
@@ -95,7 +96,7 @@ func (o orderModel) toOrder() order.Order {
 		OrderID: o.ID,
 		CPF:     o.CPF,
 		Coupon: coupon.Coupon{
-			CouponID: o.CouponID,
+			CouponID: uint64(o.CouponID.Int64),
 		},
 		Items:     items,
 		CreatedAt: o.CreatedAt,

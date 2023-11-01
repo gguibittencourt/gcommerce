@@ -7,15 +7,21 @@ import (
 	ampq "github.com/rabbitmq/amqp091-go"
 )
 
-type Publisher struct {
-	connection *ampq.Connection
-}
+type (
+	Publisher struct {
+		connection *ampq.Connection
+	}
+	PublishOptions struct {
+		ExchangeName string
+		Msg          any
+	}
+)
 
 func NewPublisher(connection *ampq.Connection) (Publisher, error) {
 	return Publisher{connection}, nil
 }
 
-func (p Publisher) Publish(ctx context.Context, msg any) error {
+func (p Publisher) Publish(ctx context.Context, exchangeName string, msg any) error {
 	body, err := json.Marshal(msg)
 	if err != nil {
 		return err
@@ -27,7 +33,7 @@ func (p Publisher) Publish(ctx context.Context, msg any) error {
 	defer channel.Close()
 	err = channel.PublishWithContext(
 		ctx,
-		"amq.direct",
+		exchangeName,
 		"",
 		false,
 		false,
