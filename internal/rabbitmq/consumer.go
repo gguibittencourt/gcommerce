@@ -30,6 +30,9 @@ func (c Consumer) Consume(ops ConsumerOptions) error {
 	if err != nil {
 		return err
 	}
+	defer func() {
+		_ = channel.Close()
+	}()
 	err = channel.ExchangeDeclare(ops.ExchangeName, ops.ExchangeType, false, false, false, false, nil)
 	if err != nil {
 		return err

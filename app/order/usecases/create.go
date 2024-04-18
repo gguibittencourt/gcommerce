@@ -24,10 +24,10 @@ type (
 		Publish(ctx context.Context, topicName string, msg any) error
 	}
 	CreateUsecase struct {
-		writer         Writer
-		freightService FreightReader
-		couponReader   CouponReader
-		publisher      Publisher
+		writer        Writer
+		freightReader FreightReader
+		couponReader  CouponReader
+		publisher     Publisher
 	}
 )
 
@@ -43,7 +43,7 @@ func (u CreateUsecase) Execute(ctx context.Context, o order.Order) (err error) {
 	if err = o.Validate(); err != nil {
 		return err
 	}
-	o.Freight, err = u.freightService.Calculate(ctx, o)
+	o.Freight, err = u.freightReader.Calculate(ctx, o)
 	if err != nil {
 		return err
 	}

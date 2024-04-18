@@ -30,7 +30,7 @@ func (p Publisher) Publish(ctx context.Context, exchangeName string, msg any) er
 	if err != nil {
 		return err
 	}
-	defer channel.Close()
+	//defer channel.Close()
 	err = channel.PublishWithContext(
 		ctx,
 		exchangeName,
